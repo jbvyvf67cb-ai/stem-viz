@@ -106,9 +106,11 @@ start Fork A's molar-mass work before the periodic table exposes atomic masses.
 | # | Visualization | Status |
 |---|---------------|--------|
 | 1 | Atomic Structure Builder | **done** ✅ |
+| 1b | Isotopes & Average Atomic Mass | **done** ✅ (trunk depth; stoichiometry bridge) |
 | 2 | Electron Configuration & Shells | **done** ✅ |
 | 3 | Periodic Table Explorer (annotated trends) | **done** ✅ |
 | 4 | Chemical Bonding (covalent focus) | **done** ✅ |
+| 4b | VSEPR Molecular Geometry | **done** ✅ (trunk depth; covalent shapes & polarity) |
 | 5 | Mole & Avogadro | planned (Fork A) |
 | 6 | Molar Mass & Conversions | planned (Fork A) |
 | 7 | Balancing & Stoichiometry | planned (Fork A) |

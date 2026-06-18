@@ -20,6 +20,8 @@ const PAGES = [
   "visualizations/periodic-table/index.html",
   "visualizations/electron-configuration/index.html",
   "visualizations/bonding/index.html",
+  "visualizations/isotopes/index.html",
+  "visualizations/vsepr/index.html",
 ];
 
 let failures = 0;

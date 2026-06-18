@@ -20,7 +20,13 @@ each system works well enough to tweak and optimize it.
    (ionic/covalent/metallic), electron transfer & sharing, octets, polarity, bond order,
    and a covalent molecule gallery.
 
-All four share one authoritative dataset, `assets/data/elements.js`.
+Trunk depth (interactive add-ons):
+- **[Isotopes & Average Atomic Mass](visualizations/isotopes/index.html)** — mix isotopes,
+  watch the weighted-average mass; the bridge to molar mass / the mole.
+- **[VSEPR Molecular Geometry](visualizations/vsepr/index.html)** — bonds + lone pairs →
+  rotatable 3D shape → polarity from the bond-dipole vector sum.
+
+All share one authoritative dataset, `assets/data/elements.js`.
 
 ## Where this is going
 
