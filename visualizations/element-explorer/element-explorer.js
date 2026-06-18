@@ -47,6 +47,34 @@ const NAT = {
 };
 /* Z 93..118 -> synthetic (no NAT entry => treated as []) */
 
+/* ---------- common natural monatomic ion charges per element, most common
+   first. Elements absent from this table have no common monatomic ion and
+   default to the neutral atom. Neutral (0) is always offered as a cycle option. */
+const ION = {
+  1:[1,-1], 3:[1], 4:[2], 7:[-3], 8:[-2], 9:[-1], 11:[1], 12:[2], 13:[3],
+  15:[-3], 16:[-2], 17:[-1], 19:[1], 20:[2], 21:[3], 22:[4,3], 23:[5,4,3,2],
+  24:[3,6,2], 25:[2,4,7], 26:[2,3], 27:[2,3], 28:[2], 29:[2,1], 30:[2], 31:[3],
+  32:[4,2], 33:[3,5], 34:[-2], 35:[-1], 37:[1], 38:[2], 39:[3], 40:[4], 41:[5],
+  42:[6,4], 44:[3,4], 45:[3], 46:[2,4], 47:[1], 48:[2], 49:[3], 50:[2,4],
+  51:[3,5], 52:[-2,4], 53:[-1], 55:[1], 56:[2], 57:[3], 58:[3,4], 59:[3], 60:[3],
+  62:[3,2], 63:[3,2], 64:[3], 65:[3], 66:[3], 67:[3], 68:[3], 69:[3], 70:[3,2],
+  71:[3], 72:[4], 73:[5], 74:[6,4], 75:[7,4], 76:[4,3], 77:[3,4], 78:[2,4],
+  79:[3,1], 80:[2,1], 81:[1,3], 82:[2,4], 83:[3,5], 84:[4,2], 85:[-1], 87:[1],
+  88:[2], 89:[3], 90:[4], 91:[5], 92:[6,4],
+};
+/* options for the ion cycler: common ions first, then neutral (if not already there) */
+function ionOptions(z){
+  const list = (ION[z] || []).slice();
+  if (!list.includes(0)) list.push(0);
+  return list;
+}
+function ionLabel(z, charge){
+  const sym = ELEMENT_BY_Z[z].symbol;
+  if (charge === 0) return sym + " (neutral)";
+  const mag = Math.abs(charge) === 1 ? "" : sup(Math.abs(charge));
+  return sym + mag + (charge > 0 ? "⁺" : "⁻");
+}
+
 const SUP = {0:"⁰",1:"¹",2:"²",3:"³",4:"⁴",5:"⁵",6:"⁶",7:"⁷",8:"⁸",9:"⁹"};
 const SUB = {0:"₀",1:"₁",2:"₂",3:"₃",4:"₄",5:"₅",6:"₆",7:"₇",8:"₈",9:"₉"};
 const sup = (n) => String(n).split("").map(d=>SUP[d]).join("");
@@ -144,7 +172,11 @@ function applyFilterDefaults(){
   if (state.filter === "nature"){
     const list = natOf(state.z);
     state.n = list.length ? (mainA(state.z) - state.z) : (massNumberCenter(state.z) - state.z);
-    state.e = state.z;                         // neutral
+    // default to the element's most common natural ion (neutral if it has none).
+    // Hydrogen is special-cased to neutral: its "ion" H+ is a bare proton, which
+    // would otherwise read as the confusing "bare nucleus" state on first view.
+    const primary = (list.length && state.z !== 1) ? ionOptions(state.z)[0] : 0;
+    state.e = state.z - primary;
   } else if (state.filter === "lab"){
     const list = natOf(state.z);
     state.n = list.length ? (Math.max(...list) + 2 - state.z) : (massNumberCenter(state.z) - state.z);
@@ -178,6 +210,16 @@ function setElectrons(e){
   state.e = Math.max(0, Math.min(130, e|0));
   render();
 }
+/* set electrons so the atom carries `charge` (a common-ion shortcut) */
+function setIonCharge(charge){ setElectrons(state.z - charge); }
+/* advance to the next common ion (then neutral, then wrap) */
+function cycleIon(){
+  const opts = ionOptions(state.z);
+  const cur = state.z - state.e;
+  let idx = opts.indexOf(cur);
+  idx = (idx + 1) % opts.length;          // if current isn't a listed ion, indexOf=-1 -> start at 0
+  setIonCharge(opts[idx]);
+}
 
 /* ---------- rendering ---------- */
 function render(){
@@ -210,6 +252,9 @@ function render(){
 
   // electron structure + derivation
   renderElectronStructure(el, e, q);
+
+  // common-ion cycler (nature mode only)
+  renderIonRow();
 
   // how-it-works text
   $("howText").innerHTML =
@@ -277,6 +322,21 @@ function syncControls(){
   $("filterHint").textContent = hints[state.filter];
 }
 
+/* ---------- common-ion cycler ---------- */
+function renderIonRow(){
+  const row = $("ionRow");
+  const list = natOf(state.z);
+  // only meaningful in nature mode for elements that actually occur in nature
+  if (state.filter !== "nature" || !list.length){ row.style.display = "none"; return; }
+  row.style.display = "block";
+  const opts = ionOptions(state.z);
+  const cur = state.z - state.e;
+  $("ionChips").innerHTML = opts.map(c =>
+    `<span class="ion-chip${c===cur?" on":""}" data-c="${c}">${ionLabel(state.z, c)}</span>`).join("");
+  for (const chip of $("ionChips").children)
+    chip.onclick = () => setIonCharge(+chip.dataset.c);
+}
+
 /* ---------- nucleus canvas ---------- */
 function rebuildNucleus(){
   const total = state.z + state.n;
@@ -333,6 +393,7 @@ function wire(){
   $("eRange").oninput=(e)=>setElectrons(+e.target.value);
   $("eNum").oninput=(e)=>setElectrons(+e.target.value||0);
   $("neutralBtn").onclick=()=>setElectrons(state.z);
+  $("ionCycle").onclick=cycleIon;
   for (const b of $("filterSeg").children) b.onclick=()=>setFilter(b.dataset.f);
 }
 

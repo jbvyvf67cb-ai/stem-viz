@@ -11,7 +11,8 @@ each system works well enough to tweak and optimize it.
 1. **[Element Explorer](visualizations/element-explorer/index.html)** —
    build any atom from protons, neutrons, electrons; element identity, charge, mass
    number, isotope, ion, and electron shells update live. An existence filter
-   (nature / lab / anything) auto-sets a valid isotope, and the panel shows whether
+   (nature / lab / anything) auto-sets a valid isotope and the element's common
+   natural ion (e.g. Na⁺, O²⁻, Fe²⁺/Fe³⁺ — clickable/cyclable), and the panel shows whether
    the nuclide occurs in nature, only in the lab, in theory, or is impossible — plus
    the electron-levels and valence derivation. This is the **only** visualization on
    the public landing page; the rest are gated behind `?beta=1`.
