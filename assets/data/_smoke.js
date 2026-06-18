@@ -16,7 +16,7 @@ function stubCtx() {
 }
 
 const PAGES = [
-  "visualizations/atomic-structure/index.html",
+  "visualizations/element-explorer/index.html",
   "visualizations/periodic-table/index.html",
   "visualizations/electron-configuration/index.html",
   "visualizations/bonding/index.html",

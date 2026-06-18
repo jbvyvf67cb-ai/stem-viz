@@ -1,0 +1,344 @@
+/* ============================================================
+   Element Explorer
+   ------------------------------------------------------------
+   Build any atom from protons / neutrons / electrons and see:
+     • which element, isotope, ion, mass number, charge
+     • whether the nuclide occurs in NATURE, only in the LAB,
+       is THEORETICAL, or is IMPOSSIBLE
+     • the electron shells, number of energy levels, valence
+       electrons — and the derivation, to prep for the periodic
+       table, electron configuration, and bonding.
+
+   The existence FILTER (nature / lab / anything) auto-sets the
+   neutron and electron counts to a valid configuration and
+   constrains the neutron slider accordingly.
+
+   Existence model: natural isotopes are curated (NAT below).
+   The lab / theoretical / impossible boundaries use an
+   approximate band around the line of stability — enough to
+   teach the idea, not a full chart of nuclides.
+   ============================================================ */
+"use strict";
+
+const $ = (id) => document.getElementById(id);
+
+/* ---------- curated natural (stable + primordial / decay-chain) isotope
+   mass numbers. Empty array => element has no natural isotopes (synthetic,
+   or Tc / Pm). Elements beyond Z=92 are treated as lab-only. ---------- */
+const NAT = {
+  1:[1,2], 2:[3,4], 3:[6,7], 4:[9], 5:[10,11], 6:[12,13,14], 7:[14,15], 8:[16,17,18],
+  9:[19], 10:[20,21,22], 11:[23], 12:[24,25,26], 13:[27], 14:[28,29,30], 15:[31],
+  16:[32,33,34,36], 17:[35,37], 18:[36,38,40], 19:[39,40,41], 20:[40,42,43,44,46,48],
+  21:[45], 22:[46,47,48,49,50], 23:[50,51], 24:[50,52,53,54], 25:[55], 26:[54,56,57,58],
+  27:[59], 28:[58,60,61,62,64], 29:[63,65], 30:[64,66,67,68,70], 31:[69,71],
+  32:[70,72,73,74,76], 33:[75], 34:[74,76,77,78,80,82], 35:[79,81], 36:[78,80,82,83,84,86],
+  37:[85,87], 38:[84,86,87,88], 39:[89], 40:[90,91,92,94,96], 41:[93], 42:[92,94,95,96,97,98,100],
+  43:[], 44:[96,98,99,100,101,102,104], 45:[103], 46:[102,104,105,106,108,110], 47:[107,109],
+  48:[106,108,110,111,112,113,114,116], 49:[113,115], 50:[112,114,115,116,117,118,119,120,122,124],
+  51:[121,123], 52:[120,122,123,124,125,126,128,130], 53:[127], 54:[124,126,128,129,130,131,132,134,136],
+  55:[133], 56:[130,132,134,135,136,137,138], 57:[138,139], 58:[136,138,140,142], 59:[141],
+  60:[142,143,144,145,146,148,150], 61:[], 62:[144,147,148,149,150,152,154], 63:[151,153],
+  64:[152,154,155,156,157,158,160], 65:[159], 66:[156,158,160,161,162,163,164], 67:[165],
+  68:[162,164,166,167,168,170], 69:[169], 70:[168,170,171,172,173,174,176], 71:[175,176],
+  72:[174,176,177,178,179,180], 73:[180,181], 74:[180,182,183,184,186], 75:[185,187],
+  76:[184,186,187,188,189,190,192], 77:[191,193], 78:[190,192,194,195,196,198], 79:[197],
+  80:[196,198,199,200,201,202,204], 81:[203,205], 82:[204,206,207,208], 83:[209],
+  84:[210], 85:[210], 86:[222], 87:[223], 88:[226], 89:[227], 90:[232], 91:[231], 92:[234,235,238],
+};
+/* Z 93..118 -> synthetic (no NAT entry => treated as []) */
+
+const SUP = {0:"⁰",1:"¹",2:"²",3:"³",4:"⁴",5:"⁵",6:"⁶",7:"⁷",8:"⁸",9:"⁹"};
+const SUB = {0:"₀",1:"₁",2:"₂",3:"₃",4:"₄",5:"₅",6:"₆",7:"₇",8:"₈",9:"₉"};
+const sup = (n) => String(n).split("").map(d=>SUP[d]).join("");
+const sub = (n) => String(n).split("").map(d=>SUB[d]).join("");
+
+/* aufbau order, to compute shells/valence for any electron count (ions too) */
+const FILL_ORDER = ["1s","2s","2p","3s","3p","4s","3d","4p","5s","4d","5p",
+                    "6s","4f","5d","6p","7s","5f","6d","7p"];
+const CAP = { s:2, p:6, d:10, f:14 };
+
+function natOf(z){ return NAT[z] || []; }
+function massNumberCenter(z){ return Math.round(ELEMENT_BY_Z[z].mass); }   // most-stable A for synthetics
+/* main natural isotope = natural A closest to the standard atomic mass */
+function mainA(z){
+  const list = natOf(z);
+  if (!list.length) return massNumberCenter(z);
+  const m = ELEMENT_BY_Z[z].mass;
+  return list.reduce((best,a)=> Math.abs(a-m) < Math.abs(best-m) ? a : best, list[0]);
+}
+
+/* ---------- existence classification of a nuclide (Z, N) ---------- */
+function bands(z){
+  const list = natOf(z);
+  const stLo = list.length ? Math.min(...list) : massNumberCenter(z);
+  const stHi = list.length ? Math.max(...list) : massNumberCenter(z);
+  const labReach  = Math.round(stHi * 0.15) + 6;
+  const theoReach = Math.round(stHi * 0.15) + 8;
+  return {
+    labLo: stLo - labReach, labHi: stHi + labReach,
+    theoLo: stLo - labReach - theoReach, theoHi: stHi + labReach + theoReach,
+  };
+}
+function classifyNuclide(z, n){
+  const A = z + n;
+  if (n < 0) return { key:"impossible", reason:"You can't have a negative number of neutrons." };
+  const list = natOf(z);
+  if (list.includes(A)) return { key:"nature", reason:`${ELEMENT_BY_Z[z].name}-${A} is one of this element's naturally occurring isotopes.` };
+  const synthElem = list.length === 0;
+  const b = bands(z);
+  if (A >= b.labLo && A <= b.labHi)
+    return { key:"lab", reason: synthElem
+      ? `This whole element is synthetic — it's only ever been created in a laboratory or reactor.`
+      : `This isotope isn't found in nature, but it has been produced in the lab.` };
+  if (A >= b.theoLo && A <= b.theoHi)
+    return { key:"theoretical", reason:`This isotope sits near the limits of nuclear stability — predicted to be possible but not (yet) observed.` };
+  return { key:"impossible", reason:`Mass number ${A} is far outside the band of stability for ${ELEMENT_BY_Z[z].symbol} — the nucleus couldn't hold together.` };
+}
+
+/* ---------- charge / electron status (separate from the nuclide) ---------- */
+function chargeStatus(z, e){
+  const q = z - e;
+  if (e === 0)            return { q, text:`<b>Bare nucleus</b> (all ${z} electrons stripped) — only in plasmas, stars, or accelerators.`, bad:false };
+  if (q === 0)            return { q, text:`<b>Neutral atom</b> — electrons balance protons.`, bad:false };
+  if (q > 0)              return { q, text:`<b>Cation ${q>1?q+"+":"+"}</b> — lost ${q} electron${q>1?"s":""}; common in nature and the lab.`, bad:false };
+  const extra = -q;
+  if (extra <= 2)         return { q, text:`<b>Anion ${extra>1?extra+"−":"−"}</b> — gained ${extra} electron${extra>1?"s":""}.`, bad:false };
+  return { q, text:`<b>Over-filled (${extra}−)</b> — an isolated atom can't bind this many extra electrons; this ion is essentially impossible.`, bad:true };
+}
+
+/* ---------- shells & valence from an electron count (handles ions) ---------- */
+function shellsFor(eCount){
+  const occ = {}; let left = eCount;
+  for (const s of FILL_ORDER){ if (left<=0) break; const put=Math.min(CAP[s[1]],left); occ[s]=put; left-=put; }
+  const sh=[]; for (const s of Object.keys(occ)){ const n=+s[0]; sh[n-1]=(sh[n-1]||0)+occ[s]; }
+  for (let i=0;i<sh.length;i++) sh[i]=sh[i]||0;
+  return sh;
+}
+
+/* ---------- state ---------- */
+const state = { z:6, n:6, e:6, filter:"nature" };
+let canvas, ctx, nucleusOrder=[];
+
+/* ---------- filter behaviour ---------- */
+function neutronRange(){
+  if (state.filter === "nature"){
+    const ns = natOf(state.z).map(a=>a-state.z);
+    return ns.length ? { min:Math.min(...ns), max:Math.max(...ns), snap:ns } : null;
+  }
+  if (state.filter === "lab"){
+    const b = bands(state.z);
+    return { min:Math.max(0,b.labLo-state.z), max:b.labHi-state.z, snap:null };
+  }
+  return { min:0, max:200, snap:null };
+}
+/* snap a neutron value to the nearest allowed for the current filter */
+function snapNeutron(nWanted){
+  const r = neutronRange();
+  if (!r) return nWanted;
+  let n = Math.max(r.min, Math.min(r.max, nWanted));
+  if (r.snap) n = r.snap.reduce((b,v)=> Math.abs(v-nWanted)<Math.abs(b-nWanted)?v:b, r.snap[0]);
+  return n;
+}
+/* when element or filter changes, reset N and electrons to a valid config */
+function applyFilterDefaults(){
+  if (state.filter === "nature"){
+    const list = natOf(state.z);
+    state.n = list.length ? (mainA(state.z) - state.z) : (massNumberCenter(state.z) - state.z);
+    state.e = state.z;                         // neutral
+  } else if (state.filter === "lab"){
+    const list = natOf(state.z);
+    state.n = list.length ? (Math.max(...list) + 2 - state.z) : (massNumberCenter(state.z) - state.z);
+    state.e = state.z;
+  } else {
+    state.n = mainA(state.z) - state.z;        // sensible default; user is free to roam
+    state.e = state.z;
+  }
+  if (state.n < 0) state.n = 0;
+}
+
+/* ---------- mutations ---------- */
+function setFilter(f){
+  state.filter = f;
+  for (const b of $("filterSeg").children) b.classList.toggle("on", b.dataset.f === f);
+  applyFilterDefaults();
+  rebuildNucleus(); render();
+}
+function setProtons(z){
+  state.z = Math.max(1, Math.min(118, z|0));
+  applyFilterDefaults();           // changing element re-derives a valid isotope for the filter
+  rebuildNucleus(); render();
+}
+function setNeutrons(n){
+  n = n|0;
+  if (state.filter !== "anything") n = snapNeutron(n);
+  state.n = Math.max(0, Math.min(250, n));
+  rebuildNucleus(); render();
+}
+function setElectrons(e){
+  state.e = Math.max(0, Math.min(130, e|0));
+  render();
+}
+
+/* ---------- rendering ---------- */
+function render(){
+  const z = state.z, n = state.n, e = state.e, A = z+n, q = z-e;
+  const el = ELEMENT_BY_Z[z];
+
+  // identity
+  $("elSymbol").textContent = el.symbol;
+  $("elZ").textContent = "Z " + z;
+  $("tile").style.background = `linear-gradient(135deg, var(--panel-2), ${ELEMENT_CATEGORIES[el.category].color}44)`;
+  $("elName").textContent = el.name;
+  const chStr = q===0 ? "" : (Math.abs(q)===1 ? (q>0?"⁺":"⁻") : sup(Math.abs(q))+(q>0?"⁺":"⁻"));
+  $("isotope").textContent = sup(A)+sub(z)+el.symbol+chStr;
+  $("isotopeName").textContent = el.name + "-" + A + (q!==0 ? " ion" : "");
+
+  // existence badge (nuclide)
+  const cls = classifyNuclide(z, n);
+  const box = $("existence");
+  box.className = "badge-existence exist-" + cls.key;
+  const TAGS = { nature:"OCCURS IN NATURE", lab:"LAB-MADE ONLY", theoretical:"THEORETICAL", impossible:"IMPOSSIBLE" };
+  $("existTag").textContent = TAGS[cls.key];
+  $("existReason").textContent = cls.reason;
+
+  // charge line
+  $("chargeLine").innerHTML = chargeStatus(z, e).text;
+
+  // readouts
+  $("rZ").textContent = z; $("rN").textContent = n; $("rA").textContent = A;
+  $("rE").textContent = e; $("rCharge").textContent = q>0?"+"+q:q;
+
+  // electron structure + derivation
+  renderElectronStructure(el, e, q);
+
+  // how-it-works text
+  $("howText").innerHTML =
+    `<b>Nature</b>: the exact isotope appears in our curated list of naturally occurring nuclides. ` +
+    `<b>Lab-made</b>: not natural, but within the range of isotopes (and synthetic elements) that have been produced. ` +
+    `<b>Theoretical</b>: just past that, near the predicted limits of nuclear stability. ` +
+    `<b>Impossible</b>: negative neutrons, or a mass number too far from stability for the nucleus to hold together. ` +
+    `(The lab/theoretical/impossible edges are an approximate model.)`;
+
+  syncControls();
+}
+
+function renderElectronStructure(el, e, q){
+  const sh = shellsFor(e);
+  const levels = sh.length;
+  const valence = levels ? sh[levels-1] : 0;
+
+  $("shellPills").innerHTML = sh.map((c,i)=>
+    `<span class="shell-pill${i===levels-1?" outer":""}">n=${i+1}: ${c} e⁻</span>`).join("")
+    || `<span class="shell-pill">no electrons</span>`;
+
+  $("stepLevels").innerHTML =
+    `<b>Electron levels (shells): ${levels}.</b> Electrons fill from the innermost shell out — ` +
+    `<code>${sh.map((c,i)=>`n${i+1}=${c}`).join(", ")||"—"}</code>. ` +
+    (q===0 ? `For a neutral atom this equals the element's <b>period</b> on the periodic table (period ${el.period}).`
+           : `(Shells are recomputed for this ion's ${e} electrons, not the neutral atom.)`);
+
+  let valExpl;
+  if (e === 0) valExpl = `No electrons, so no valence shell.`;
+  else if (el.block === "f" && q===0) valExpl = `Valence is more complex for f-block elements; the outer shell holds ${valence} e⁻.`;
+  else valExpl = `<b>Valence electrons: ${valence}</b> — the electrons in the outermost shell (n=${levels}). ` +
+       (q===0 && el.group>=13 ? `For a main-group atom this matches the group's units digit (group ${el.group}).`
+        : q===0 && (el.group===1||el.group===2) ? `That matches group ${el.group}.` : ``);
+  $("stepValence").innerHTML = valExpl;
+
+  $("stepWhy").innerHTML = e===0 ? "" :
+    `Why it matters: the valence count drives how this atom <b>bonds</b> — losing, gaining, or sharing ` +
+    `electrons to reach a full outer shell. That's the bridge to the bonding and periodic-table tools.`;
+}
+
+/* ---------- controls sync ---------- */
+function syncControls(){
+  $("pNum").value = state.z; $("pRange").value = state.z;
+  $("nNum").value = state.n; $("eNum").value = state.e; $("eRange").value = state.e;
+
+  // neutron slider range follows the filter
+  const r = neutronRange();
+  const rowN = $("rowN");
+  if (state.filter !== "anything" && r){
+    $("nRange").min = r.min; $("nRange").max = Math.max(r.max, r.min+1);
+    rowN.classList.toggle("locked", state.filter==="nature");
+  } else {
+    $("nRange").min = 0; $("nRange").max = 200; rowN.classList.remove("locked");
+  }
+  $("nRange").value = state.n;
+
+  // filter hint
+  const list = natOf(state.z);
+  const hints = {
+    nature: list.length ? `Neutrons snap to ${ELEMENT_BY_Z[state.z].symbol}'s ${list.length} natural isotope${list.length>1?"s":""}; electrons set to neutral.`
+                        : `${ELEMENT_BY_Z[state.z].name} has no natural isotopes — it's synthetic. Try Lab-made or Anything.`,
+    lab: `Neutrons range over isotopes that have been produced; electrons set to neutral.`,
+    anything: `No limits — explore freely, including impossible nuclei and exotic ions.`,
+  };
+  $("filterHint").textContent = hints[state.filter];
+}
+
+/* ---------- nucleus canvas ---------- */
+function rebuildNucleus(){
+  const total = state.z + state.n;
+  nucleusOrder = [];
+  for (let i=0;i<total;i++) nucleusOrder.push(i < state.z ? "p" : "n");
+  nucleusOrder.sort((a,b)=>((a.charCodeAt(0)*7)%5)-((b.charCodeAt(0)*7)%5));
+}
+function nucleusLayout(total){
+  const pts=[]; let placed=0, ring=0;
+  while(placed<total){
+    const inRing = ring===0?1:Math.floor(ring*6), r=ring*9;
+    for(let i=0;i<inRing && placed<total;i++){
+      const a=(i/inRing)*Math.PI*2+ring*0.7;
+      pts.push({x:Math.cos(a)*r,y:Math.sin(a)*r}); placed++;
+    }
+    ring++;
+  }
+  return pts;
+}
+function resize(){ const r=canvas.getBoundingClientRect(), d=window.devicePixelRatio||1;
+  canvas.width=r.width*d; canvas.height=r.height*d; ctx.setTransform(d,0,0,d,0,0); }
+function draw(t){
+  const w=canvas.clientWidth, h=canvas.clientHeight, cx=w/2, cy=h/2;
+  ctx.clearRect(0,0,w,h);
+  const sh = shellsFor(state.e);
+  const baseR=Math.min(w,h)*0.12, gap=(Math.min(w,h)*0.46-baseR)/Math.max(sh.length,1);
+  for(let i=0;i<sh.length;i++){
+    const r=baseR+gap*(i+1);
+    ctx.beginPath(); ctx.arc(cx,cy,r,0,7); ctx.strokeStyle="rgba(74,214,255,.20)"; ctx.lineWidth=1.1; ctx.stroke();
+    const c=sh[i], speed=0.0004/(i+1);
+    for(let k=0;k<c;k++){
+      const a=(k/c)*Math.PI*2+t*speed+i, x=cx+Math.cos(a)*r, y=cy+Math.sin(a)*r;
+      ctx.beginPath(); ctx.arc(x,y,5,0,7); ctx.fillStyle="#4ad6ff"; ctx.shadowColor="#4ad6ff"; ctx.shadowBlur=9; ctx.fill(); ctx.shadowBlur=0;
+    }
+  }
+  const layout=nucleusLayout(state.z+state.n), wob=Math.sin(t*0.002)*1.4;
+  for(let i=0;i<layout.length;i++){
+    const kind=nucleusOrder[i]||(i<state.z?"p":"n");
+    const px=cx+layout[i].x+Math.sin(i+t*0.001)*wob, py=cy+layout[i].y+Math.cos(i+t*0.001)*wob;
+    ctx.beginPath(); ctx.arc(px,py,7,0,7); ctx.fillStyle=kind==="p"?"#ff5d6c":"#9aa3c7"; ctx.fill();
+  }
+  requestAnimationFrame(draw);
+}
+
+/* ---------- wiring ---------- */
+function wire(){
+  $("pPlus").onclick=()=>setProtons(state.z+1); $("pMinus").onclick=()=>setProtons(state.z-1);
+  $("nPlus").onclick=()=>setNeutrons(state.n+1); $("nMinus").onclick=()=>setNeutrons(state.n-1);
+  $("ePlus").onclick=()=>setElectrons(state.e+1); $("eMinus").onclick=()=>setElectrons(state.e-1);
+  $("pRange").oninput=(e)=>setProtons(+e.target.value);
+  $("pNum").oninput=(e)=>setProtons(+e.target.value||1);
+  $("nRange").oninput=(e)=>setNeutrons(+e.target.value);
+  $("nNum").oninput=(e)=>setNeutrons(+e.target.value||0);
+  $("eRange").oninput=(e)=>setElectrons(+e.target.value);
+  $("eNum").oninput=(e)=>setElectrons(+e.target.value||0);
+  $("neutralBtn").onclick=()=>setElectrons(state.z);
+  for (const b of $("filterSeg").children) b.onclick=()=>setFilter(b.dataset.f);
+}
+
+window.addEventListener("DOMContentLoaded", ()=>{
+  canvas=$("stage"); ctx=canvas.getContext("2d"); resize(); window.addEventListener("resize",resize);
+  wire();
+  state.z=6; setFilter("nature");   // initializes carbon defaults and renders
+  requestAnimationFrame(draw);
+});

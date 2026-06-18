@@ -8,9 +8,13 @@ each system works well enough to tweak and optimize it.
 
 ## Live now — the foundations trunk is complete
 
-1. **[Atomic Structure Builder](visualizations/atomic-structure/index.html)** —
-   add/remove protons, neutrons, electrons; element identity, charge, mass number,
-   isotope notation, and shells update live. Challenge mode included.
+1. **[Element Explorer](visualizations/element-explorer/index.html)** —
+   build any atom from protons, neutrons, electrons; element identity, charge, mass
+   number, isotope, ion, and electron shells update live. An existence filter
+   (nature / lab / anything) auto-sets a valid isotope, and the panel shows whether
+   the nuclide occurs in nature, only in the lab, in theory, or is impossible — plus
+   the electron-levels and valence derivation. This is the **only** visualization on
+   the public landing page; the rest are gated behind `?beta=1`.
 2. **[Electron Configuration & Shells](visualizations/electron-configuration/index.html)** —
    fill orbitals one electron at a time (s/p/d/f, spin, Hund's rule), with the aufbau
    energy ladder and the documented exceptions flagged.

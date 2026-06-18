@@ -105,7 +105,7 @@ start Fork A's molar-mass work before the periodic table exposes atomic masses.
 
 | # | Visualization | Status |
 |---|---------------|--------|
-| 1 | Atomic Structure Builder | **done** ✅ |
+| 1 | Element Explorer (was Atomic Structure Builder) — public landing page; existence filter (nature/lab/theoretical/impossible) + electron-level/valence derivation | **done** ✅ |
 | 1b | Isotopes & Average Atomic Mass | **done** ✅ (trunk depth; stoichiometry bridge) |
 | 2 | Electron Configuration & Shells | **done** ✅ |
 | 3 | Periodic Table Explorer (annotated trends) | **done** ✅ |
