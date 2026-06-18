@@ -6,11 +6,21 @@ each system works well enough to tweak and optimize it.
 
 **▶ Open `index.html`** for the landing page that links to every visualization.
 
-## Live now
+## Live now — the foundations trunk is complete
 
-- **[Atomic Structure Builder](visualizations/atomic-structure/index.html)** —
-  add/remove protons, neutrons, electrons and watch element identity, charge, mass
-  number, isotope notation, and electron shells update live. Includes a challenge mode.
+1. **[Atomic Structure Builder](visualizations/atomic-structure/index.html)** —
+   add/remove protons, neutrons, electrons; element identity, charge, mass number,
+   isotope notation, and shells update live. Challenge mode included.
+2. **[Electron Configuration & Shells](visualizations/electron-configuration/index.html)** —
+   fill orbitals one electron at a time (s/p/d/f, spin, Hund's rule), with the aufbau
+   energy ladder and the documented exceptions flagged.
+3. **[Periodic Table Explorer](visualizations/periodic-table/index.html)** — all 118
+   elements; colour by trend, highlight a group/period/block, read the shared property.
+4. **[Chemical Bonding](visualizations/bonding/index.html)** — two-atom bond predictor
+   (ionic/covalent/metallic), electron transfer & sharing, octets, polarity, bond order,
+   and a covalent molecule gallery.
+
+All four share one authoritative dataset, `assets/data/elements.js`.
 
 ## Where this is going
 
