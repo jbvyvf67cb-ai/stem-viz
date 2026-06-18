@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Atomic Structure Builder — STEM Visualizations</title>
+  <link rel="stylesheet" href="../../assets/css/main.css" />
+  <style>
+    .layout { display: grid; grid-template-columns: 1.3fr 1fr; gap: 22px; align-items: start; }
+    @media (max-width: 900px) { .layout { grid-template-columns: 1fr; } }
+
+    .stage-wrap { position: relative; }
+    #stage {
+      width: 100%; height: 480px; display: block;
+      background: radial-gradient(circle at 50% 50%, #10183a 0%, #0a0f24 70%);
+      border: 1px solid var(--line); border-radius: var(--radius);
+    }
+    .legend { display: flex; gap: 16px; margin-top: 10px; font-size: .85rem; color: var(--ink-soft); flex-wrap: wrap; }
+    .dot { display: inline-block; width: 11px; height: 11px; border-radius: 50%; margin-right: 5px; vertical-align: middle; }
+    .dot.p { background: var(--proton); }
+    .dot.n { background: var(--neutron); }
+    .dot.e { background: var(--electron); }
+
+    .particle-row { display: grid; grid-template-columns: 90px 1fr auto; gap: 10px; align-items: center; margin: 10px 0; }
+    .particle-row .ctl { display: flex; align-items: center; gap: 6px; }
+    .particle-row input[type=number] {
+      width: 64px; background: var(--bg-soft); color: var(--ink);
+      border: 1px solid var(--line); border-radius: 7px; padding: 6px; font-family: var(--mono);
+    }
+    .particle-row .name { font-weight: 600; }
+    .particle-row .name small { display:block; font-weight: 400; color: var(--ink-dim); }
+
+    .identity {
+      display: flex; align-items: center; gap: 16px; margin-bottom: 14px;
+    }
+    .symbol-tile {
+      width: 84px; height: 84px; border-radius: 12px; flex: none;
+      background: linear-gradient(135deg, var(--panel-2), var(--accent) 220%);
+      border: 1px solid var(--line);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 2.2rem; font-weight: 700;
+    }
+    .identity .who h2 { margin: 0; font-size: 1.5rem; }
+    .identity .who .iso { font-family: var(--mono); font-size: 1.4rem; color: var(--accent-2); }
+    .identity .who .iso small { color: var(--ink-dim); font-size: .8rem; font-family: var(--font); }
+
+    .status { margin: 8px 0; padding: 8px 12px; border-radius: 9px; font-size: .9rem;
+              background: var(--bg-soft); border: 1px solid var(--line); }
+    .status.good { border-color: var(--good); color: var(--good); }
+    .status.warn { border-color: var(--warn); color: var(--warn); }
+
+    table.readouts { width: 100%; border-collapse: collapse; margin-top: 6px; }
+    table.readouts td { padding: 7px 6px; border-bottom: 1px solid var(--line); font-size: .9rem; }
+    table.readouts td:first-child { color: var(--ink-soft); }
+    table.readouts td:last-child { text-align: right; font-family: var(--mono); }
+
+    .notes { margin: 10px 0 0; padding-left: 18px; color: var(--ink-soft); font-size: .88rem; }
+    .notes li { margin: 4px 0; }
+
+    .toolbar { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 14px; }
+    select { background: var(--bg-soft); color: var(--ink); border: 1px solid var(--line);
+             border-radius: 8px; padding: 8px; font-family: var(--font); }
+    .challenge-prompt { display:none; margin-top: 12px; padding: 10px 12px; border-radius: 9px;
+                        background: rgba(91,140,255,.12); border: 1px solid var(--accent); color: var(--ink); }
+  </style>
+</head>
+<body>
+  <header class="site-header">
+    <div class="wrap">
+      <div class="breadcrumb"><a href="../../index.html">← All visualizations</a></div>
+      <h1>Atomic Structure Builder</h1>
+      <div class="tag">Add particles, watch identity, charge, mass, and shells respond.</div>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <div class="layout">
+      <!-- ============ LEFT: the atom ============ -->
+      <section>
+        <div class="stage-wrap">
+          <canvas id="stage"></canvas>
+        </div>
+        <div class="legend">
+          <span><span class="dot p"></span>Proton (+1, in nucleus)</span>
+          <span><span class="dot n"></span>Neutron (0, in nucleus)</span>
+          <span><span class="dot e"></span>Electron (−1, in shells)</span>
+        </div>
+
+        <div class="panel" style="margin-top:16px">
+          <strong>Build the atom</strong>
+          <p style="color:var(--ink-soft); font-size:.85rem; margin:6px 0 4px">
+            These three counts are the <em>only</em> inputs. Everything on the right is
+            calculated from them — change one and trace what happens.
+          </p>
+
+          <div class="particle-row">
+            <span class="name">Protons<small>→ element &amp; Z</small></span>
+            <input type="range" id="pRange" min="0" max="36" />
+            <span class="ctl">
+              <button class="ghost" id="pMinus">−</button>
+              <input type="number" id="pNum" min="0" max="36" />
+              <button class="ghost" id="pPlus">+</button>
+            </span>
+          </div>
+
+          <div class="particle-row">
+            <span class="name">Neutrons<small>→ isotope &amp; mass</small></span>
+            <input type="range" id="nRange" min="0" max="60" />
+            <span class="ctl">
+              <button class="ghost" id="nMinus">−</button>
+              <input type="number" id="nNum" min="0" max="200" />
+              <button class="ghost" id="nPlus">+</button>
+            </span>
+          </div>
+
+          <div class="particle-row">
+            <span class="name">Electrons<small>→ charge &amp; bonding</small></span>
+            <input type="range" id="eRange" min="0" max="40" />
+            <span class="ctl">
+              <button class="ghost" id="eMinus">−</button>
+              <input type="number" id="eNum" min="0" max="200" />
+              <button class="ghost" id="ePlus">+</button>
+            </span>
+          </div>
+
+          <div class="toolbar">
+            <label style="margin:0; align-self:center; color:var(--ink-soft)">Load element:</label>
+            <select id="preset"></select>
+            <button id="makeNeutral" class="ghost">Make neutral</button>
+            <button id="resetBtn" class="ghost">Reset</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============ RIGHT: live readout ============ -->
+      <section>
+        <div class="panel">
+          <div class="identity">
+            <div class="symbol-tile" id="elSymbol">C</div>
+            <div class="who">
+              <h2 id="elName">Carbon</h2>
+              <div class="iso"><span id="isotope">¹²₆C</span>
+                <small id="isotopeName">Carbon-12</small></div>
+            </div>
+          </div>
+
+          <div class="status" id="chargeBadge">0 charge — Neutral atom</div>
+          <div class="status" id="challengeStatus"></div>
+
+          <table class="readouts">
+            <tr><td>Atomic number (Z = protons)</td><td id="readZ">6</td></tr>
+            <tr><td>Neutrons (N)</td><td id="readN">6</td></tr>
+            <tr><td>Electrons</td><td id="readE">6</td></tr>
+            <tr><td>Mass number (A = Z + N)</td><td id="readA">12</td></tr>
+            <tr><td>Net charge (Z − electrons)</td><td id="readCharge">0</td></tr>
+            <tr><td>Electron shells</td><td id="readShells">2 · 4</td></tr>
+            <tr><td>Valence electrons (outer shell)</td><td id="readValence">4</td></tr>
+            <tr><td>Computed mass (p+n+e)</td><td id="readMass">12.0000 u</td></tr>
+            <tr><td>Mass number approximation</td><td id="readMassApprox">≈ 12 u</td></tr>
+            <tr><td>Standard atomic weight</td><td id="readStdMass">12.011 u</td></tr>
+          </table>
+
+          <ul class="notes" id="notes"></ul>
+        </div>
+
+        <div class="panel" style="margin-top:16px">
+          <strong>Challenge mode</strong>
+          <p style="color:var(--ink-soft); font-size:.85rem; margin:6px 0">
+            Get a target, then build it by adjusting protons, neutrons, and electrons.
+          </p>
+          <div class="toolbar">
+            <button id="newChallenge">New challenge</button>
+            <button id="clearChallenge" class="ghost">Clear</button>
+          </div>
+          <div class="challenge-prompt" id="challengePrompt"></div>
+        </div>
+      </section>
+    </div>
+
+    <footer class="footer">
+      <p>Tip: open this page's source (<code>atom.js</code>) to see exactly how each
+         quantity is derived from the three particle counts.</p>
+    </footer>
+  </main>
+
+  <script src="atom.js"></script>
+</body>
+</html>
+</content>
