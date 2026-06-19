@@ -17,7 +17,9 @@ each system works well enough to tweak and optimize it.
    the electron-levels and valence derivation. An expandable explainer gives
    category-specific context (crust abundance + facts, first-synthesis history, or the
    band-of-stability physics) with a chart-of-nuclides (N vs Z) plot and the element's
-   isotope-abundance breakdown. This is the **only** visualization on the public
+   isotope-abundance breakdown. Protons range up to **Z = 1000** — elements beyond 118
+   are generated with their systematic IUPAC placeholder names (e.g. 120 = unbinilium, Ubn)
+   and shown as theoretical. This is the **only** visualization on the public
    landing page; the rest are gated behind `?beta=1`.
 2. **[Electron Configuration & Shells](visualizations/electron-configuration/index.html)** —
    fill orbitals one electron at a time (s/p/d/f, spin, Hund's rule), with the aufbau

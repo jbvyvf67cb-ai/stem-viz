@@ -141,21 +141,21 @@
 
           <div class="particle-row" id="rowP">
             <span class="name">Protons<small>→ element &amp; Z</small></span>
-            <input type="range" id="pRange" min="1" max="118" />
+            <input type="range" id="pRange" min="1" max="1000" />
             <span class="ctl"><button class="ghost" id="pMinus">−</button>
-              <input type="number" id="pNum" min="1" max="118" /><button class="ghost" id="pPlus">+</button></span>
+              <input type="number" id="pNum" min="1" max="1000" /><button class="ghost" id="pPlus">+</button></span>
           </div>
           <div class="particle-row" id="rowN">
             <span class="name">Neutrons<small>→ isotope</small></span>
             <input type="range" id="nRange" min="0" max="200" />
             <span class="ctl"><button class="ghost" id="nMinus">−</button>
-              <input type="number" id="nNum" min="0" max="250" /><button class="ghost" id="nPlus">+</button></span>
+              <input type="number" id="nNum" min="0" max="3000" /><button class="ghost" id="nPlus">+</button></span>
           </div>
           <div class="particle-row" id="rowE">
             <span class="name">Electrons<small>→ charge</small></span>
-            <input type="range" id="eRange" min="0" max="121" />
+            <input type="range" id="eRange" min="0" max="1010" />
             <span class="ctl"><button class="ghost" id="eMinus">−</button>
-              <input type="number" id="eNum" min="0" max="130" /><button class="ghost" id="ePlus">+</button></span>
+              <input type="number" id="eNum" min="0" max="1010" /><button class="ghost" id="ePlus">+</button></span>
           </div>
           <div style="margin-top:8px"><button class="ghost" id="neutralBtn">Make neutral</button></div>
         </div>
@@ -209,9 +209,11 @@
     </div>
 
     <footer class="footer">
-      <p>Existence categories use curated natural-isotope data plus an approximate model of
-         the limits of nuclear stability — good for learning the concept; not a substitute for a
-         full chart of nuclides.</p>
+      <p>Protons go up to Z = 1000: elements past 118 have never been made, but every one has a
+         systematic IUPAC placeholder name (e.g. 120 = unbinilium, Ubn), so they show as
+         <em>theoretical</em>. Existence categories use curated natural-isotope data plus an
+         approximate model of nuclear stability — good for learning the concept, not a substitute
+         for a full chart of nuclides. Super-heavy electron structures are theoretical extrapolations.</p>
     </footer>
   </main>
 

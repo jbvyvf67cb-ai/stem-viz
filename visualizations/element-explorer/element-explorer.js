@@ -69,7 +69,7 @@ function ionOptions(z){
   return list;
 }
 function ionLabel(z, charge){
-  const sym = ELEMENT_BY_Z[z].symbol;
+  const sym = elementFor(z).symbol;
   if (charge === 0) return sym + " (neutral)";
   const mag = Math.abs(charge) === 1 ? "" : sup(Math.abs(charge));
   return sym + mag + (charge > 0 ? "⁺" : "⁻");
@@ -80,18 +80,49 @@ const SUB = {0:"₀",1:"₁",2:"₂",3:"₃",4:"₄",5:"₅",6:"₆",7:"₇",8:"
 const sup = (n) => String(n).split("").map(d=>SUP[d]).join("");
 const sub = (n) => String(n).split("").map(d=>SUB[d]).join("");
 
-/* aufbau order, to compute shells/valence for any electron count (ions too) */
-const FILL_ORDER = ["1s","2s","2p","3s","3p","4s","3d","4p","5s","4d","5p",
-                    "6s","4f","5d","6p","7s","5f","6d","7p"];
-const CAP = { s:2, p:6, d:10, f:14 };
+const MAX_Z = 1000;   // explorer goes up to Z=1000 (theoretical, systematically named)
+
+/* Extended aufbau (Madelung) order, generated so it covers any electron count
+   up to ~1000 — including the g, h, … orbitals predicted for super-heavy atoms.
+   For Z ≤ 118 this reproduces the standard 1s 2s 2p 3s … order exactly. */
+const ORB_LETTER = ["s","p","d","f","g","h","i","k","l","m","n","o"];
+function orbLetter(l){ return ORB_LETTER[l] || ("(l"+l+")"); }
+function buildFillOrder(maxN){
+  const subs = [];
+  for (let n=1; n<=maxN; n++) for (let l=0; l<n; l++) subs.push({ n, l });
+  subs.sort((a,b)=> (a.n+a.l) - (b.n+b.l) || a.n - b.n);   // Madelung: n+l, then n
+  return subs.map(s => ({ n:s.n, label:s.n+orbLetter(s.l), cap:2*(2*s.l+1) }));
+}
+const FILL = buildFillOrder(22);   // far more than enough for 1000 electrons
+
+/* ---------- IUPAC systematic names for elements beyond the dataset (Z > 118) ---------- */
+const SYS_ROOTS = ["nil","un","bi","tri","quad","pent","hex","sept","oct","enn"];
+const SYS_SYM   = ["n","u","b","t","q","p","h","s","o","e"];
+function systematicElement(z){
+  const digits = String(z).split("").map(Number);
+  let name = digits.map(d => SYS_ROOTS[d]).join("");
+  name = name.replace(/nnn/g, "nn");      // "enn"+"nil" -> single double-n (e.g. 190)
+  name = name.replace(/i$/, "") + "ium";  // drop trailing i of bi/tri before -ium
+  name = name.charAt(0).toUpperCase() + name.slice(1);
+  let sym = digits.map(d => SYS_SYM[d]).join("");
+  sym = sym.charAt(0).toUpperCase() + sym.slice(1);
+  return { number:z, symbol:sym, name, category:"unknown",
+           period:null, group:null, block:null, mass:null, valence:null,
+           systematic:true };
+}
+/* element record for any Z: dataset for 1..118, systematic for 119..1000 */
+function elementFor(z){ return ELEMENT_BY_Z[z] || systematicElement(z); }
 
 function natOf(z){ return NAT[z] || []; }
-function massNumberCenter(z){ return Math.round(ELEMENT_BY_Z[z].mass); }   // most-stable A for synthetics
+/* central mass number: real most-stable A for Z ≤ 118; an N/Z≈1.5 estimate above */
+function massNumberCenter(z){
+  return ELEMENT_BY_Z[z] ? Math.round(ELEMENT_BY_Z[z].mass) : Math.round(z * 2.5);
+}
 /* main natural isotope = natural A closest to the standard atomic mass */
 function mainA(z){
   const list = natOf(z);
   if (!list.length) return massNumberCenter(z);
-  const m = ELEMENT_BY_Z[z].mass;
+  const m = ELEMENT_BY_Z[z] ? ELEMENT_BY_Z[z].mass : massNumberCenter(z);
   return list.reduce((best,a)=> Math.abs(a-m) < Math.abs(best-m) ? a : best, list[0]);
 }
 
@@ -110,6 +141,11 @@ function bands(z){
 function classifyNuclide(z, n){
   const A = z + n;
   if (n < 0) return { key:"impossible", reason:"You can't have a negative number of neutrons." };
+  if (z > 118){
+    const el = systematicElement(z);
+    return { key:"theoretical", reason:`Element ${z} (${el.symbol}) has only a systematic IUPAC placeholder name — ` +
+      `it has never been synthesised, so it exists only on paper.` };
+  }
   const list = natOf(z);
   if (list.includes(A)) return { key:"nature", reason:`${ELEMENT_BY_Z[z].name}-${A} is one of this element's naturally occurring isotopes.` };
   const synthElem = list.length === 0;
@@ -134,11 +170,10 @@ function chargeStatus(z, e){
   return { q, text:`<b>Over-filled (${extra}−)</b> — an isolated atom can't bind this many extra electrons; this ion is essentially impossible.`, bad:true };
 }
 
-/* ---------- shells & valence from an electron count (handles ions) ---------- */
+/* ---------- shells & valence from an electron count (handles ions & super-heavy) ---------- */
 function shellsFor(eCount){
-  const occ = {}; let left = eCount;
-  for (const s of FILL_ORDER){ if (left<=0) break; const put=Math.min(CAP[s[1]],left); occ[s]=put; left-=put; }
-  const sh=[]; for (const s of Object.keys(occ)){ const n=+s[0]; sh[n-1]=(sh[n-1]||0)+occ[s]; }
+  const sh=[]; let left=eCount;
+  for (const s of FILL){ if (left<=0) break; const put=Math.min(s.cap,left); sh[s.n-1]=(sh[s.n-1]||0)+put; left-=put; }
   for (let i=0;i<sh.length;i++) sh[i]=sh[i]||0;
   return sh;
 }
@@ -196,18 +231,18 @@ function setFilter(f){
   rebuildNucleus(); render();
 }
 function setProtons(z){
-  state.z = Math.max(1, Math.min(118, z|0));
+  state.z = Math.max(1, Math.min(MAX_Z, z|0));
   applyFilterDefaults();           // changing element re-derives a valid isotope for the filter
   rebuildNucleus(); render();
 }
 function setNeutrons(n){
   n = n|0;
   if (state.filter !== "anything") n = snapNeutron(n);
-  state.n = Math.max(0, Math.min(250, n));
+  state.n = Math.max(0, Math.min(3000, n));
   rebuildNucleus(); render();
 }
 function setElectrons(e){
-  state.e = Math.max(0, Math.min(130, e|0));
+  state.e = Math.max(0, Math.min(MAX_Z + 10, e|0));
   render();
 }
 /* set electrons so the atom carries `charge` (a common-ion shortcut) */
@@ -224,7 +259,7 @@ function cycleIon(){
 /* ---------- rendering ---------- */
 function render(){
   const z = state.z, n = state.n, e = state.e, A = z+n, q = z-e;
-  const el = ELEMENT_BY_Z[z];
+  const el = elementFor(z);
 
   // identity
   $("elSymbol").textContent = el.symbol;
@@ -271,11 +306,13 @@ function renderElectronStructure(el, e, q){
     `<span class="shell-pill${i===levels-1?" outer":""}">n=${i+1}: ${c} e⁻</span>`).join("")
     || `<span class="shell-pill">no electrons</span>`;
 
+  const periodNote = el.period
+    ? `For a neutral atom this equals the element's <b>period</b> on the periodic table (period ${el.period}).`
+    : `That's beyond the known periodic table — there's no confirmed period for this element.`;
   $("stepLevels").innerHTML =
     `<b>Electron levels (shells): ${levels}.</b> Electrons fill from the innermost shell out — ` +
     `<code>${sh.map((c,i)=>`n${i+1}=${c}`).join(", ")||"—"}</code>. ` +
-    (q===0 ? `For a neutral atom this equals the element's <b>period</b> on the periodic table (period ${el.period}).`
-           : `(Shells are recomputed for this ion's ${e} electrons, not the neutral atom.)`);
+    (q===0 ? periodNote : `(Shells are recomputed for this ion's ${e} electrons, not the neutral atom.)`);
 
   let valExpl;
   if (e === 0) valExpl = `No electrons, so no valence shell.`;
@@ -285,9 +322,12 @@ function renderElectronStructure(el, e, q){
         : q===0 && (el.group===1||el.group===2) ? `That matches group ${el.group}.` : ``);
   $("stepValence").innerHTML = valExpl;
 
-  $("stepWhy").innerHTML = e===0 ? "" :
-    `Why it matters: the valence count drives how this atom <b>bonds</b> — losing, gaining, or sharing ` +
-    `electrons to reach a full outer shell. That's the bridge to the bonding and periodic-table tools.`;
+  $("stepWhy").innerHTML = el.systematic
+    ? `Heads-up: for super-heavy atoms this filling is a <b>theoretical extrapolation</b> (extended aufbau with g-orbitals). ` +
+      `Relativistic effects mean real configurations — if these atoms could ever be made — would likely differ.`
+    : (e===0 ? "" :
+      `Why it matters: the valence count drives how this atom <b>bonds</b> — losing, gaining, or sharing ` +
+      `electrons to reach a full outer shell. That's the bridge to the bonding and periodic-table tools.`);
 }
 
 /* ---------- expandable existence explainer ---------- */
@@ -308,7 +348,7 @@ function fmtCrust(ppm){
 }
 
 function renderExplain(category, z, n, e){
-  const el = ELEMENT_BY_Z[z], info = (typeof ELEMENT_INFO!=="undefined" && ELEMENT_INFO[z]) || {};
+  const el = elementFor(z), info = (typeof ELEMENT_INFO!=="undefined" && ELEMENT_INFO[z]) || {};
   const A = z + n;
   const SUMMARY = {
     nature: "🌍 Where is it found? Isotope mix & facts",
@@ -334,6 +374,13 @@ function renderExplain(category, z, n, e){
               `isotopes are essential in medicine — PET scans, cancer therapy — and in research.`;
     }
     if (info.fact) html += `<br><br>${info.fact}`;
+  } else if (category === "theoretical" && el.systematic){
+    html += `<b>Element ${z} — ${el.name} (${el.symbol})</b><span class="big-num">never synthesised</span>` +
+            `Every element has a ready-made <b>systematic IUPAC name</b> built from its digits ` +
+            `(${String(z).split("").map(d=>SYS_ROOTS[d]).join("-")} → “${el.name.toLowerCase()}”), used as a placeholder ` +
+            `until — if ever — it's actually made and given a permanent name. Elements up to 118 exist; beyond that we have ` +
+            `names but no atoms. Some theorists predict an “<b>island of stability</b>” near Z≈114–126 where a few super-heavy ` +
+            `nuclei might survive longer, but nothing this heavy has been created.<br><br>` + bandPhysics;
   } else if (category === "theoretical"){
     html += `${el.name}-${A} lies just <b>beyond the isotopes we've managed to observe</b>, near the predicted edge of ` +
             `what can exist.<br><br>` + bandPhysics;
@@ -355,11 +402,13 @@ function renderExplain(category, z, n, e){
 /* isotope abundance breakdown for the current element */
 function renderIsotopes(z, curA){
   const box = $("isoBreakdown");
-  const natList = natOf(z), sym = ELEMENT_BY_Z[z].symbol;
+  const el = elementFor(z), natList = natOf(z), sym = el.symbol;
   if (!natList.length){
+    const msg = z > 118
+      ? `${el.name} has never been synthesised, so none of its isotopes exist yet — they're entirely predicted.`
+      : `${el.name} has no stable or naturally occurring isotopes — every isotope is radioactive and made artificially.`;
     box.innerHTML = `<div class="iso-title">Isotopes</div>` +
-      `<div style="color:var(--ink-soft);font-size:.84rem">${ELEMENT_BY_Z[z].name} has no stable or naturally ` +
-      `occurring isotopes — every isotope is radioactive and made artificially.</div>`;
+      `<div style="color:var(--ink-soft);font-size:.84rem">${msg}</div>`;
     return;
   }
   const ab = (typeof ISO_ABUND!=="undefined") ? ISO_ABUND[z] : null;
@@ -405,7 +454,7 @@ function drawNuclideChart(){
 
   const curN = state.n, curZ = state.z;
   const pad = { l:34, r:10, t:10, b:26 };
-  const xMax = Math.max(180, curN + 6), yMax = 118;
+  const xMax = Math.max(180, curN + 6), yMax = Math.max(118, curZ + 10);
   const px = (nn)=> pad.l + (nn/xMax)*(W-pad.l-pad.r);
   const py = (zz)=> H-pad.b - (zz/yMax)*(H-pad.t-pad.b);
 
@@ -449,15 +498,16 @@ function syncControls(){
     $("nRange").min = r.min; $("nRange").max = Math.max(r.max, r.min+1);
     rowN.classList.toggle("locked", state.filter==="nature");
   } else {
-    $("nRange").min = 0; $("nRange").max = 200; rowN.classList.remove("locked");
+    $("nRange").min = 0; $("nRange").max = Math.max(200, Math.round(state.z * 2.2)); rowN.classList.remove("locked");
   }
   $("nRange").value = state.n;
 
   // filter hint
   const list = natOf(state.z);
   const hints = {
-    nature: list.length ? `Neutrons snap to ${ELEMENT_BY_Z[state.z].symbol}'s ${list.length} natural isotope${list.length>1?"s":""}; electrons set to neutral.`
-                        : `${ELEMENT_BY_Z[state.z].name} has no natural isotopes — it's synthetic. Try Lab-made or Anything.`,
+    nature: list.length ? `Neutrons snap to ${elementFor(state.z).symbol}'s ${list.length} natural isotope${list.length>1?"s":""}; electrons set to neutral.`
+                        : (state.z>118 ? `${elementFor(state.z).name} is purely theoretical — no natural isotopes exist.`
+                                       : `${elementFor(state.z).name} has no natural isotopes — it's synthetic. Try Lab-made or Anything.`),
     lab: `Neutrons range over isotopes that have been produced; electrons set to neutral.`,
     anything: `No limits — explore freely, including impossible nuclei and exotic ions.`,
   };
