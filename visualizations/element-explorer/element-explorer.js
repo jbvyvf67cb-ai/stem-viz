@@ -256,13 +256,8 @@ function render(){
   // common-ion cycler (nature mode only)
   renderIonRow();
 
-  // how-it-works text
-  $("howText").innerHTML =
-    `<b>Nature</b>: the exact isotope appears in our curated list of naturally occurring nuclides. ` +
-    `<b>Lab-made</b>: not natural, but within the range of isotopes (and synthetic elements) that have been produced. ` +
-    `<b>Theoretical</b>: just past that, near the predicted limits of nuclear stability. ` +
-    `<b>Impossible</b>: negative neutrons, or a mass number too far from stability for the nucleus to hold together. ` +
-    `(The lab/theoretical/impossible edges are an approximate model.)`;
+  // expandable, category-specific explainer (+ chart, isotope breakdown)
+  renderExplain(cls.key, z, n, e);
 
   syncControls();
 }
@@ -293,6 +288,153 @@ function renderElectronStructure(el, e, q){
   $("stepWhy").innerHTML = e===0 ? "" :
     `Why it matters: the valence count drives how this atom <b>bonds</b> — losing, gaining, or sharing ` +
     `electrons to reach a full outer shell. That's the bridge to the bonding and periodic-table tools.`;
+}
+
+/* ---------- expandable existence explainer ---------- */
+const bandPhysics =
+  "Atoms are held together by the <b>strong nuclear force</b>, which only reaches between touching nucleons, while " +
+  "every proton <b>electrically repels</b> every other proton across the whole nucleus. Neutrons add strong-force " +
+  "“glue” without adding repulsion — so light nuclei are stable near N ≈ Z, and heavier ones need <b>more and more " +
+  "neutrons</b> than protons. The stable nuclei trace a curving <b>band of stability</b> that bends above the N = Z " +
+  "line. Stray off the band and the nucleus is radioactive; go far enough (past the <b>drip lines</b>) and it can't " +
+  "hold together at all.";
+
+function fmtCrust(ppm){
+  if (ppm == null) return null;
+  if (ppm >= 10000) return (ppm/10000).toFixed(ppm>=100000?0:1) + "% by mass";
+  if (ppm >= 1)     return ppm + " ppm (mg/kg)";
+  if (ppm >= 0.001) return ppm + " ppm — rare";
+  return "< 0.001 ppm — extremely rare";
+}
+
+function renderExplain(category, z, n, e){
+  const el = ELEMENT_BY_Z[z], info = (typeof ELEMENT_INFO!=="undefined" && ELEMENT_INFO[z]) || {};
+  const A = z + n;
+  const SUMMARY = {
+    nature: "🌍 Where is it found? Isotope mix & facts",
+    lab: "🔬 How & when was it made?",
+    theoretical: "❓ Why only theoretical? (the band of stability)",
+    impossible: "🚫 Why is this impossible?",
+  };
+  $("explainSummary").textContent = (SUMMARY[category] || "Learn more") + "  ▾";
+
+  let html = "";
+  if (category === "nature"){
+    const crust = fmtCrust(info.crust);
+    html += crust ? `<b>Abundance in Earth's crust</b><span class="big-num">${crust}</span>`
+                  : `<b>Abundance:</b> negligible in the solid crust (often found only in air, seawater, or decay chains).<br><br>`;
+    if (info.fact) html += info.fact;
+  } else if (category === "lab"){
+    const syn = (typeof SYNTHESIS!=="undefined") ? SYNTHESIS[z] : null;
+    if (syn){
+      html += `<b>First synthesised ${syn.year}</b><span class="big-num">${el.name}</span>By ${syn.by} — ${syn.how}`;
+    } else {
+      html += `<b>${el.name}-${A} doesn't occur naturally.</b> Isotopes like it are produced in <b>nuclear reactors</b> ` +
+              `(neutron capture) or <b>particle accelerators / cyclotrons</b> (smashing nuclei together). Many lab-made ` +
+              `isotopes are essential in medicine — PET scans, cancer therapy — and in research.`;
+    }
+    if (info.fact) html += `<br><br>${info.fact}`;
+  } else if (category === "theoretical"){
+    html += `${el.name}-${A} lies just <b>beyond the isotopes we've managed to observe</b>, near the predicted edge of ` +
+            `what can exist.<br><br>` + bandPhysics;
+  } else { // impossible
+    html += (n < 0)
+      ? `<b>A nucleus can't hold a negative number of neutrons.</b><br><br>` + bandPhysics
+      : `${el.name}-${A} sits <b>far outside the band of stability</b> — past the drip line, where the strong force ` +
+        `can't bind that lopsided mix of protons and neutrons; an added nucleon would fall straight back out.<br><br>` + bandPhysics;
+  }
+  $("explainBody").innerHTML = html;
+
+  renderIsotopes(z, A);
+  drawNuclideChart();
+  $("chartCaption").innerHTML =
+    "Each dot is a <span style='color:#4ad6ff'>naturally occurring nuclide</span> — together they trace the band of " +
+    "stability. Your atom is the <span style='color:#fff'>ringed</span> marker.";
+}
+
+/* isotope abundance breakdown for the current element */
+function renderIsotopes(z, curA){
+  const box = $("isoBreakdown");
+  const natList = natOf(z), sym = ELEMENT_BY_Z[z].symbol;
+  if (!natList.length){
+    box.innerHTML = `<div class="iso-title">Isotopes</div>` +
+      `<div style="color:var(--ink-soft);font-size:.84rem">${ELEMENT_BY_Z[z].name} has no stable or naturally ` +
+      `occurring isotopes — every isotope is radioactive and made artificially.</div>`;
+    return;
+  }
+  const ab = (typeof ISO_ABUND!=="undefined") ? ISO_ABUND[z] : null;
+  let html = `<div class="iso-title">Natural isotope breakdown of ${sym}</div>`;
+  if (ab){
+    const mainA = +Object.keys(ab).reduce((a,b)=> ab[b]>ab[a] ? b : a);
+    for (const A of natList){
+      const pct = ab[A]; if (pct == null) continue;
+      const isCur = A===curA, isMain = A===mainA;
+      html += `<div class="iso-bar-row">` +
+        `<span class="lbl${isCur?" cur":""}">${sym}-${A}</span>` +
+        `<div class="iso-track"><div class="iso-fill${isMain?" main":""}${isCur?" cur":""}" style="width:${Math.max(pct,0.6)}%"></div></div>` +
+        `<span class="pctv">${pct>=0.01 ? pct.toFixed(pct<1?3:2) : "<0.01"}%</span></div>`;
+    }
+    const mp = ab[mainA];
+    html += `<div style="color:var(--ink-dim);font-size:.78rem;margin-top:6px">Most abundant: ` +
+      `<b style="color:var(--accent-2)">${sym}-${mainA}</b> at ${mp.toFixed(mp<1?3:2)}%.` +
+      (curA && ab[curA]==null ? ` Your isotope (${sym}-${curA}) isn't one of the abundant natural ones.` : ``) + `</div>`;
+  } else {
+    html += `<div class="iso-chips">` + natList.map(A =>
+      `<span class="iso-masschip${A===curA?" cur":""}">${sym}-${A}</span>`).join("") + `</div>` +
+      `<div style="color:var(--ink-dim);font-size:.78rem;margin-top:6px">${natList.length} natural isotope` +
+      `${natList.length>1?"s":""}; exact % breakdown isn't catalogued here yet.</div>`;
+  }
+  box.innerHTML = html;
+}
+
+/* band-of-stability chart of nuclides (N vs Z) */
+let NATURAL_POINTS = null;
+function naturalPoints(){
+  if (NATURAL_POINTS) return NATURAL_POINTS;
+  NATURAL_POINTS = [];
+  for (const z in NAT) for (const A of NAT[z]) NATURAL_POINTS.push({ n: A - (+z), z: +z });
+  return NATURAL_POINTS;
+}
+function drawNuclideChart(){
+  const cv = $("nuclideChart");
+  if (!$("explain").open) return;                 // collapsed => 0 size, nothing to draw
+  const W = cv.clientWidth, H = cv.clientHeight, d = window.devicePixelRatio || 1;
+  if (!W || !H) return;
+  cv.width = W*d; cv.height = H*d;
+  const g = cv.getContext("2d"); g.setTransform(d,0,0,d,0,0); g.clearRect(0,0,W,H);
+
+  const curN = state.n, curZ = state.z;
+  const pad = { l:34, r:10, t:10, b:26 };
+  const xMax = Math.max(180, curN + 6), yMax = 118;
+  const px = (nn)=> pad.l + (nn/xMax)*(W-pad.l-pad.r);
+  const py = (zz)=> H-pad.b - (zz/yMax)*(H-pad.t-pad.b);
+
+  // axes
+  g.strokeStyle="rgba(255,255,255,.18)"; g.lineWidth=1;
+  g.beginPath(); g.moveTo(pad.l,pad.t); g.lineTo(pad.l,H-pad.b); g.lineTo(W-pad.r,H-pad.b); g.stroke();
+  g.fillStyle="#6f78a3"; g.font="10px system-ui"; g.textAlign="center";
+  g.fillText("Neutrons (N) →", (pad.l+W)/2, H-7);
+  g.save(); g.translate(11,(pad.t+H-pad.b)/2); g.rotate(-Math.PI/2); g.fillText("Protons (Z) →",0,0); g.restore();
+
+  // N = Z reference
+  const diag = Math.min(xMax, yMax);
+  g.strokeStyle="rgba(255,255,255,.16)"; g.setLineDash([4,4]);
+  g.beginPath(); g.moveTo(px(0),py(0)); g.lineTo(px(diag),py(diag)); g.stroke(); g.setLineDash([]);
+  g.fillStyle="rgba(255,255,255,.35)"; g.font="9px system-ui"; g.textAlign="left";
+  g.fillText("N = Z", px(diag)-32, py(diag)-4);
+
+  // natural nuclides = the band
+  g.fillStyle="rgba(74,214,255,.55)";
+  for (const p of naturalPoints()) g.fillRect(px(p.n)-1, py(p.z)-1, 2.3, 2.3);
+
+  // current marker, coloured by category
+  const COLORS = { nature:"#36d399", lab:"#5b8cff", theoretical:"#ffc857", impossible:"#ff6b6b" };
+  const cat = classifyNuclide(curZ, curN).key;
+  const mx = px(Math.max(0,curN)), my = py(Math.min(yMax,curZ));
+  g.strokeStyle = COLORS[cat]; g.lineWidth = 2;
+  g.beginPath(); g.arc(mx,my,6,0,7); g.stroke();
+  g.globalAlpha=.5; g.beginPath(); g.moveTo(mx-11,my); g.lineTo(mx+11,my); g.moveTo(mx,my-11); g.lineTo(mx,my+11); g.stroke(); g.globalAlpha=1;
+  if (curN < 0){ g.fillStyle=COLORS[cat]; g.font="9px system-ui"; g.textAlign="left"; g.fillText("N<0 (off chart)", pad.l+4, py(curZ)-9); }
 }
 
 /* ---------- controls sync ---------- */
@@ -394,11 +536,13 @@ function wire(){
   $("eNum").oninput=(e)=>setElectrons(+e.target.value||0);
   $("neutralBtn").onclick=()=>setElectrons(state.z);
   $("ionCycle").onclick=cycleIon;
+  $("explain").addEventListener("toggle", ()=>{ if ($("explain").open) drawNuclideChart(); });
   for (const b of $("filterSeg").children) b.onclick=()=>setFilter(b.dataset.f);
 }
 
 window.addEventListener("DOMContentLoaded", ()=>{
-  canvas=$("stage"); ctx=canvas.getContext("2d"); resize(); window.addEventListener("resize",resize);
+  canvas=$("stage"); ctx=canvas.getContext("2d"); resize();
+  window.addEventListener("resize", ()=>{ resize(); drawNuclideChart(); });
   wire();
   state.z=6; setFilter("nature");   // initializes carbon defaults and renders
   requestAnimationFrame(draw);

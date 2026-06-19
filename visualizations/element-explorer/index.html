@@ -76,9 +76,30 @@
     .deriv .step { font-size:.85rem; color:var(--ink-soft); margin:5px 0; line-height:1.5; }
     .deriv code { color:var(--electron); }
 
-    details.how { margin-top:12px; }
-    details.how summary { cursor:pointer; color:var(--accent); font-size:.85rem; }
-    details.how p { color:var(--ink-soft); font-size:.82rem; line-height:1.5; }
+    details.explain { margin:0 0 12px; border:1px solid var(--line); border-radius:10px; background:var(--bg-soft); }
+    details.explain > summary { cursor:pointer; padding:10px 13px; font-size:.88rem; font-weight:600; color:var(--accent);
+      list-style:none; user-select:none; }
+    details.explain > summary::-webkit-details-marker { display:none; }
+    details.explain[open] > summary { border-bottom:1px solid var(--line); }
+    .explain-inner { padding:12px 13px; }
+    #nuclideChart { width:100%; height:250px; display:block; background:#0a0f24; border:1px solid var(--line); border-radius:8px; }
+    .chart-caption { color:var(--ink-dim); font-size:.78rem; margin:6px 0 12px; line-height:1.4; }
+    #explainBody { font-size:.86rem; color:var(--ink-soft); line-height:1.55; }
+    #explainBody b { color:var(--ink); }
+    #explainBody .big-num { font-family:var(--mono); font-size:1.3rem; color:var(--accent-2); display:block; margin:2px 0 8px; }
+
+    .iso-title { margin:14px 0 8px; font-size:.85rem; color:var(--ink); font-weight:600; }
+    .iso-bar-row { display:grid; grid-template-columns:58px 1fr 56px; gap:8px; align-items:center; margin:5px 0; }
+    .iso-bar-row .lbl { font-family:var(--mono); font-size:.8rem; color:var(--ink-soft); }
+    .iso-bar-row .lbl.cur { color:var(--accent-2); font-weight:700; }
+    .iso-track { background:var(--panel-2); border-radius:6px; height:18px; overflow:hidden; }
+    .iso-fill { height:100%; background:var(--electron); border-radius:6px; }
+    .iso-fill.main { background:var(--accent-2); }
+    .iso-fill.cur { outline:2px solid #fff; outline-offset:-2px; }
+    .iso-bar-row .pctv { font-family:var(--mono); font-size:.78rem; text-align:right; color:var(--ink-soft); }
+    .iso-chips { display:flex; gap:5px; flex-wrap:wrap; margin-top:6px; }
+    .iso-masschip { font-family:var(--mono); font-size:.78rem; padding:3px 8px; border-radius:7px; background:var(--panel-2); border:1px solid var(--line); color:var(--ink-soft); }
+    .iso-masschip.cur { border-color:var(--accent-2); color:var(--accent-2); }
   </style>
 </head>
 <body>
@@ -157,6 +178,16 @@
           </div>
           <div class="charge-line" id="chargeLine"></div>
 
+          <details class="explain" id="explain">
+            <summary id="explainSummary">Learn more ▾</summary>
+            <div class="explain-inner">
+              <canvas id="nuclideChart"></canvas>
+              <div class="chart-caption" id="chartCaption"></div>
+              <div id="explainBody"></div>
+              <div id="isoBreakdown"></div>
+            </div>
+          </details>
+
           <table class="readouts">
             <tr><td>Atomic number (Z = protons)</td><td id="rZ">6</td></tr>
             <tr><td>Neutrons (N)</td><td id="rN">6</td></tr>
@@ -173,10 +204,6 @@
             <div class="step" id="stepWhy"></div>
           </div>
 
-          <details class="how">
-            <summary>How are nature / lab / theoretical / impossible decided?</summary>
-            <p id="howText"></p>
-          </details>
         </div>
       </section>
     </div>
@@ -189,7 +216,7 @@
   </main>
 
   <script src="../../assets/data/elements.js"></script>
+  <script src="../../assets/data/element-facts.js"></script>
   <script src="element-explorer.js"></script>
 </body>
 </html>
-</content>

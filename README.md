@@ -14,8 +14,11 @@ each system works well enough to tweak and optimize it.
    (nature / lab / anything) auto-sets a valid isotope and the element's common
    natural ion (e.g. Na⁺, O²⁻, Fe²⁺/Fe³⁺ — clickable/cyclable), and the panel shows whether
    the nuclide occurs in nature, only in the lab, in theory, or is impossible — plus
-   the electron-levels and valence derivation. This is the **only** visualization on
-   the public landing page; the rest are gated behind `?beta=1`.
+   the electron-levels and valence derivation. An expandable explainer gives
+   category-specific context (crust abundance + facts, first-synthesis history, or the
+   band-of-stability physics) with a chart-of-nuclides (N vs Z) plot and the element's
+   isotope-abundance breakdown. This is the **only** visualization on the public
+   landing page; the rest are gated behind `?beta=1`.
 2. **[Electron Configuration & Shells](visualizations/electron-configuration/index.html)** —
    fill orbitals one electron at a time (s/p/d/f, spin, Hund's rule), with the aufbau
    energy ladder and the documented exceptions flagged.
