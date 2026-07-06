@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Periodic Table Explorer — STEM Visualizations</title>
   <link rel="stylesheet" href="../../assets/css/main.css" />
+  <link rel="stylesheet" href="../../assets/css/module.css" />
   <style>
     .toolbar { display:flex; gap:10px; flex-wrap:wrap; align-items:center; margin-bottom:16px; }
     .toolbar .group { display:flex; gap:6px; align-items:center; background:var(--panel); border:1px solid var(--line);
@@ -69,7 +70,7 @@
     </div>
   </header>
 
-  <main class="wrap">
+  <main class="wrap" id="explorePanel">
     <div class="toolbar">
       <div class="group">
         <label for="colorMode">Colour by</label>
@@ -131,6 +132,7 @@
 
   <script src="../../assets/data/elements.js"></script>
   <script src="periodic-table.js"></script>
+  <script src="module.js"></script>
+  <script src="../../assets/js/module-shell.js"></script>
 </body>
 </html>
-</content>

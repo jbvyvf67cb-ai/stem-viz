@@ -1,7 +1,7 @@
 # M5 · Chemical Bonding — module content
 
 **Explore:** the Chemical Bonding viz (this folder).
-**Status:** draft — outline + one migrated card; flesh out before building this module's UI.
+**Status:** ✅ written (mirrors `module.js`, which the shell renders).
 **Owns:** why atoms bond (the octet idea); ionic bonds; covalent bonds (single/double/triple,
 polarity); metallic bonds.
 
@@ -37,5 +37,3 @@ Na⁺ + Cl⁻ → **NaCl** (table salt).
 - (mc) In a covalent bond electrons are → transferred / **shared** / removed.
 - (interactive) Pick two atoms that form a nonpolar covalent bond.
 - (interactive) Change the bond order until both atoms have a full octet.
-
-_TODO: full lesson text for cards 2–6; 5–8 quiz questions; this module leans early-high-school._

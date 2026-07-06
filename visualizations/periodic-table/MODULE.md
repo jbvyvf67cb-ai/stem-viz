@@ -1,7 +1,7 @@
 # M4 · Periodic Table — module content
 
 **Explore:** the Periodic Table Explorer (this folder).
-**Status:** draft — outline + one migrated card; flesh out before building this module's UI.
+**Status:** ✅ written (mirrors `module.js`, which the shell renders).
 **Owns:** reading a table cell; periods vs. groups; metals/nonmetals/metalloids; periodic trends.
 
 ---
@@ -34,5 +34,3 @@ Each box shows the **symbol**, the **atomic number**, and the **average atomic m
 - (mc) The row number of an element tells you roughly its number of → protons / **electron shells** / neutrons.
 - (mc) Elements in the same group have the same number of → **valence electrons** / neutrons / shells.
 - (interactive) Colour by a trend and identify which corner is most electronegative.
-
-_TODO: full lesson text for cards 2–5; 5–8 quiz questions; decide trend depth for the grade level._

@@ -1,7 +1,7 @@
 # M6 · Molecular Shape (VSEPR) — module content
 
 **Explore:** the VSEPR Molecular Geometry viz (this folder).
-**Status:** draft — outline only; flesh out before building this module's UI.
+**Status:** ✅ written (mirrors `module.js`, which the shell renders).
 **Owns:** electron domains → 3D shape; how shape decides **molecular polarity**.
 Builds on M5 (covalent bonds). Leans high-school.
 
@@ -24,5 +24,3 @@ Builds on M5 (covalent bonds). Leans high-school.
 - (mc) CO₂ is linear and → **nonpolar** / polar.
 - (mc) Water is bent because of its → extra protons / **lone pairs** / neutrons.
 - (interactive) Build a molecule that is symmetric and therefore nonpolar.
-
-_TODO: full lesson text; 5–8 quiz questions._

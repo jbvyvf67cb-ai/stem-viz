@@ -20,11 +20,11 @@ Explore centerpiece of exactly one module and owns its own Learn cards and Quiz.
 | # | Module | Explore (visualization) | Owns these topics | Content status |
 |---|--------|-------------------------|-------------------|----------------|
 | **M1** | Atomic Structure | `element-explorer` | subatomic particles; charge & ions; mass & mass number; atomic number / identity; **intro** isotopes; nuclear stability; radioactive decay; (bonus) history of the atom | ✅ written |
-| **M2** | Isotopes & Atomic Mass | `isotopes` | isotopes deep-dive; abundance; **average atomic mass** (weighted) | ✎ draft |
-| **M3** | Electron Configuration | `electron-configuration` | shells / energy levels; orbitals & spin; valence electrons; aufbau order + exceptions | ✎ draft |
-| **M4** | Periodic Table | `periodic-table` | reading a cell; periods vs. groups; metals/nonmetals; periodic trends | ✎ draft |
-| **M5** | Chemical Bonding | `bonding` | why atoms bond (octet); ionic; covalent (single/double/triple, polarity); metallic | ✎ draft |
-| **M6** | Molecular Shape | `vsepr` | electron domains → shape; shape → polarity | ✎ draft |
+| **M2** | Isotopes & Atomic Mass | `isotopes` | isotopes deep-dive; abundance; **average atomic mass** (weighted) | ✅ written |
+| **M3** | Electron Configuration | `electron-configuration` | shells / energy levels; orbitals & spin; valence electrons; aufbau order + exceptions | ✅ written |
+| **M4** | Periodic Table | `periodic-table` | reading a cell; periods vs. groups; metals/nonmetals; periodic trends | ✅ written |
+| **M5** | Chemical Bonding | `bonding` | why atoms bond (octet); ionic; covalent (single/double/triple, polarity); metallic | ✅ written |
+| **M6** | Molecular Shape | `vsepr` | electron domains → shape; shape → polarity | ✅ written |
 | *Fork A* | Mole, Molar Mass, Stoichiometry, Gas Laws | *(new)* | quantitative path | planned |
 | *Fork B* | Crystal Lattices, Band Theory | *(new)* | solid-state path | planned |
 
@@ -92,8 +92,13 @@ that open each module (still public = M1 only until we choose otherwise; `?beta=
 
 **Build-task grading contract.** Each visualization exposes a read-only hook the quiz can
 poll, e.g. the Element Explorer would expose `window.moduleState()` → `{ z, n, e, charge }`.
-A `build` question's `check` (e.g. `{ z:8, n:10, charge:0 }`) is compared against it. Tasks
-may also optionally *set* the viz to a starting state via `tryIt.preset`.
+A `build` question's `check` (e.g. `{ z:8, n:10, charge:0 }`) is compared against it. Each
+value may be a primitive (strict `===`) or a spec `{ min, max, gt, lt, eq }` for numeric
+ranges (e.g. `{ avg: { min: 35.7, max: 36.2 } }`). Tasks may also optionally *set* the viz to
+a starting state via `tryIt.preset`. Per-viz `moduleState()` shapes:
+`element-explorer {z,n,e,charge}` · `isotopes {symbol,avg}` · `electron-configuration
+{z,shown,levels,valence,filled}` · `periodic-table {symbol,colorMode,highlightMode,highlightValue}`
+· `bonding {a,b,bondType,bondOrder}` · `vsepr {bonds,lone,shape,polar}`.
 
 ## Build order
 1. **Docs (this step):** MODULES.md + per-visualization MODULE.md content (M1 full, M2–M6 drafts).

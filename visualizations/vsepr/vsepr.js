@@ -184,6 +184,10 @@ function clamp(){ // keep total within 2..6 (the geometries we model)
 }
 function update(){ clamp(); renderPanel(); }
 
+/* ---------- module hooks (Learn/Quiz shell) ---------- */
+window.moduleState = () => ({ bonds, lone, shape: shapeName(bonds, lone), polar: compute().polar });
+window.moduleSetState = (s) => { if (!s) return; if (s.bonds != null) bonds = s.bonds|0; if (s.lone != null) lone = s.lone|0; update(); };
+
 window.addEventListener("DOMContentLoaded", () => {
   canvas = $("scene"); ctx = canvas.getContext("2d"); size();
   window.addEventListener("resize", size);

@@ -1,7 +1,7 @@
 # M3 · Electron Configuration & Shells — module content
 
 **Explore:** the Electron Configuration & Shells viz (this folder).
-**Status:** draft — outline only; flesh out before building this module's UI.
+**Status:** ✅ written (mirrors `module.js`, which the shell renders).
 **Owns:** electron shells / energy levels; orbitals & spin; **valence electrons**; the aufbau
 (filling) order and its exceptions. (Valence is applied later in M4 groups and M5 bonding.)
 
@@ -28,5 +28,3 @@
 - (numeric) How many valence electrons does oxygen have? _A: 6._
 - (build) Fill an atom to a full outer shell (noble-gas configuration).
 
-_TODO: write full lesson text, decide grade level (this leans upper-middle/early-high school),
-and 5–8 quiz questions._

@@ -123,6 +123,19 @@ function drawAtomGlyph(c, at, R, bonds, atoms, nonbond) {
 }
 function angDiff(a,b){ let d=a-b; while(d>Math.PI)d-=2*Math.PI; while(d<-Math.PI)d+=2*Math.PI; return d; }
 
+/* ---------- module hooks (Learn/Quiz shell) ---------- */
+window.moduleState = () => { const c = classify(A, B); return { a: A.symbol, b: B.symbol, bondType: c.type, bondOrder }; };
+window.moduleSetState = (s) => {
+  if (!s) return;
+  if (s.a && ELEMENT_BY_SYMBOL[s.a]) A = ELEMENT_BY_SYMBOL[s.a];
+  if (s.b && ELEMENT_BY_SYMBOL[s.b]) B = ELEMENT_BY_SYMBOL[s.b];
+  userOrder = (s.order != null) ? s.order : null;
+  if ($("atomA")) $("atomA").value = A.number;
+  if ($("atomB")) $("atomB").value = B.number;
+  if (typeof polyShown !== "undefined") polyShown = null;
+  anim = 0; render();
+};
+
 /* ---------- main render of the two-atom bond ---------- */
 function render() {
   const cls = classify(A, B);

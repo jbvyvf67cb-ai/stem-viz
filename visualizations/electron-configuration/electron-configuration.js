@@ -189,6 +189,14 @@ function setZ(z){ state.z=Math.max(1,Math.min(118,z)); state.shown=state.z; stop
 function setShown(n){ state.shown=Math.max(0,Math.min(state.z,n)); render(); }
 function stopPlay(){ if(state.timer){clearInterval(state.timer); state.timer=null; $("playBtn").textContent="Auto-fill";} }
 
+/* ---------- module hooks (Learn/Quiz shell) ---------- */
+window.moduleState = () => {
+  const sh = shellsFromOcc(aufbauOcc(state.z));
+  return { z: state.z, shown: state.shown, levels: sh.length, valence: sh.length ? sh[sh.length-1] : 0,
+           filled: state.shown >= state.z };
+};
+window.moduleSetState = (s) => { if (s && s.z != null) setZ(Math.max(1, Math.min(118, s.z|0))); };
+
 function wire() {
   const pick = $("elPick");
   for (const e of ELEMENTS) {

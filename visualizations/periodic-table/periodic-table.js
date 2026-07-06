@@ -227,6 +227,24 @@ function flashCategory(key, on) {
 }
 
 /* ---------- search ---------- */
+/* ---------- module hooks (Learn/Quiz shell) ---------- */
+window.moduleState = () => ({
+  symbol: pinned ? pinned.symbol : null,
+  colorMode,
+  highlightMode,
+  highlightValue: highlightValue != null ? String(highlightValue) : null,
+});
+window.moduleSetState = (s) => {
+  if (!s) return;
+  if (s.colorMode) { colorMode = s.colorMode; $("colorMode").value = s.colorMode; }
+  if (s.highlightMode) {
+    highlightMode = s.highlightMode; $("highlightMode").value = s.highlightMode; populateHighlight();
+    if (s.highlightValue != null) { highlightValue = String(s.highlightValue); $("highlightValue").value = String(s.highlightValue); }
+  }
+  if (s.symbol) { doSearch(s.symbol); }
+  paint();
+};
+
 function doSearch(q) {
   q = q.trim().toLowerCase();
   if (!q) return;
