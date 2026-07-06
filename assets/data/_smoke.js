@@ -11,6 +11,8 @@ function stubCtx() {
   return new Proxy({}, { get: (_, p) => {
     if (p === "canvas") return { width: 0, height: 0 };
     if (p === "measureText") return () => ({ width: 10 });
+    if (p === "createRadialGradient" || p === "createLinearGradient")
+      return () => ({ addColorStop() {} });
     return () => {};
   }});
 }
@@ -22,6 +24,7 @@ const PAGES = [
   "visualizations/bonding/index.html",
   "visualizations/isotopes/index.html",
   "visualizations/vsepr/index.html",
+  "visualizations/laser-diamond/index.html",
 ];
 
 let failures = 0;

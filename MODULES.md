@@ -25,17 +25,17 @@ Explore centerpiece of exactly one module and owns its own Learn cards and Quiz.
 | **M4** | Periodic Table | `periodic-table` | reading a cell; periods vs. groups; metals/nonmetals; periodic trends | ✅ written |
 | **M5** | Chemical Bonding | `bonding` | why atoms bond (octet); ionic; covalent (single/double/triple, polarity); metallic | ✅ written |
 | **M6** | Molecular Shape | `vsepr` | electron domains → shape; shape → polarity | ✅ written |
+| **Adv** | Laser on Diamond | `laser-diamond` | bandgap/transparency; thermal conduction; boundary & finite-size heat loss; graphitization runaway; the two thresholds | ✅ written |
 | *Fork A* | Mole, Molar Mass, Stoichiometry, Gas Laws | *(new)* | quantitative path | planned |
 | *Fork B* | Crystal Lattices, Band Theory | *(new)* | solid-state path | planned |
 
 Content for each module lives in that visualization's folder as `MODULE.md`
 (e.g. `visualizations/element-explorer/MODULE.md`). This file is the index.
 
-### Candidate advanced modules (ideas)
-- **Laser on Diamond** — a thermal-physics + finite-size simulation (does "infinite time"
-  help you cut a diamond? depends on the boundary). Advanced / Fork B track, own
-  visualization, reuses the module shell. Full spec captured in
-  [`ideas/laser-on-diamond.md`](ideas/laser-on-diamond.md).
+### Advanced modules
+- **Laser on Diamond** ✅ built — a thermal-physics + finite-size simulation (does "infinite
+  time" help you cut a diamond? depends on the boundary). Own visualization, reuses the module
+  shell. Full spec: [`ideas/laser-on-diamond.md`](ideas/laser-on-diamond.md).
 
 ### Ownership of shared topics (no duplication)
 - **Isotopes**: a light *intro* card in **M1** (build different-neutron atoms); the full
