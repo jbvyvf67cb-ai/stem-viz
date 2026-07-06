@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Element Explorer — STEM Visualizations</title>
   <link rel="stylesheet" href="../../assets/css/main.css" />
+  <link rel="stylesheet" href="../../assets/css/module.css" />
   <style>
     .layout { display: grid; grid-template-columns: 1.25fr 1fr; gap: 22px; align-items: start; }
     @media (max-width: 980px) { .layout { grid-template-columns: 1fr; } }
@@ -111,7 +112,7 @@
     </div>
   </header>
 
-  <main class="wrap">
+  <main class="wrap" id="explorePanel">
     <div class="layout">
       <!-- LEFT: the atom + controls -->
       <section>
@@ -220,5 +221,7 @@
   <script src="../../assets/data/elements.js"></script>
   <script src="../../assets/data/element-facts.js"></script>
   <script src="element-explorer.js"></script>
+  <script src="module.js"></script>
+  <script src="../../assets/js/module-shell.js"></script>
 </body>
 </html>

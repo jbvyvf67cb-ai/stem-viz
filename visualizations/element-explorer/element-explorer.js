@@ -573,6 +573,22 @@ function draw(t){
   requestAnimationFrame(draw);
 }
 
+/* ---------- module hooks (for the Learn/Quiz shell) ---------- */
+// Read the current build so the quiz can grade "build this atom" tasks.
+window.moduleState = () => ({ z: state.z, n: state.n, e: state.e, charge: state.z - state.e });
+// Configure the atom from a lesson preset. Uses the "anything" filter so exact
+// values hold (no isotope snapping), defaulting to a neutral atom if e is omitted.
+window.moduleSetState = (s) => {
+  if (!s) return;
+  state.filter = "anything";
+  for (const b of $("filterSeg").children) b.classList.toggle("on", b.dataset.f === "anything");
+  if (s.z != null) state.z = Math.max(1, Math.min(MAX_Z, s.z | 0));
+  if (s.n != null) state.n = Math.max(0, Math.min(3000, s.n | 0));
+  if (s.e != null) state.e = Math.max(0, Math.min(MAX_Z + 10, s.e | 0));
+  else if (s.z != null) state.e = state.z;   // neutral by default
+  rebuildNucleus(); render();
+};
+
 /* ---------- wiring ---------- */
 function wire(){
   $("pPlus").onclick=()=>setProtons(state.z+1); $("pMinus").onclick=()=>setProtons(state.z-1);
