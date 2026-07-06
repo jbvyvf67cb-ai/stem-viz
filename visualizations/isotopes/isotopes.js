@@ -48,6 +48,16 @@ function load(sym) {
 function resetNatural(){ pct = ISO[symbol].map(i => i.nat); render(); }
 function makeEqual(){ const n = ISO[symbol].length; pct = ISO[symbol].map(()=>100/n); render(); }
 
+/* ---------- module hooks (for the Learn/Quiz shell) ---------- */
+// Read current element + weighted-average mass so the quiz can grade tasks.
+window.moduleState = () => ({ symbol, avg: weightedAvg().avg });
+// Load an element (and optionally set its isotope mix) from a lesson preset.
+window.moduleSetState = (s) => {
+  if (!s || !s.symbol || !ISO[s.symbol]) return;
+  load(s.symbol);
+  if (Array.isArray(s.pct)) { pct = s.pct.slice(); render(); }
+};
+
 /* weighted average using current abundances, normalized by their sum */
 function weightedAvg() {
   const list = ISO[symbol];

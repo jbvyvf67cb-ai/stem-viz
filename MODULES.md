@@ -31,6 +31,12 @@ Explore centerpiece of exactly one module and owns its own Learn cards and Quiz.
 Content for each module lives in that visualization's folder as `MODULE.md`
 (e.g. `visualizations/element-explorer/MODULE.md`). This file is the index.
 
+### Candidate advanced modules (ideas)
+- **Laser on Diamond** — a thermal-physics + finite-size simulation (does "infinite time"
+  help you cut a diamond? depends on the boundary). Advanced / Fork B track, own
+  visualization, reuses the module shell. Full spec captured in
+  [`ideas/laser-on-diamond.md`](ideas/laser-on-diamond.md).
+
 ### Ownership of shared topics (no duplication)
 - **Isotopes**: a light *intro* card in **M1** (build different-neutron atoms); the full
   treatment + **average atomic mass** in **M2**.

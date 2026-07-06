@@ -24,6 +24,29 @@
   const elFrom = (html) => { const t = document.createElement("template"); t.innerHTML = html.trim(); return t.content.firstElementChild; };
   const esc = (s) => String(s).replace(/[&<>]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" }[c]));
 
+  /* build-task matcher: value may be a primitive (strict ===) or a spec
+     { min, max, gt, lt, eq } for numeric ranges/comparisons. */
+  function matches(got, want) {
+    if (want && typeof want === "object") {
+      if ("eq" in want && got !== want.eq) return false;
+      if ("min" in want && !(got >= want.min)) return false;
+      if ("max" in want && !(got <= want.max)) return false;
+      if ("gt" in want && !(got > want.gt)) return false;
+      if ("lt" in want && !(got < want.lt)) return false;
+      return true;
+    }
+    return got === want;
+  }
+  function describe(want) {
+    if (want && typeof want === "object") {
+      if ("min" in want && "max" in want) return `${want.min}–${want.max}`;
+      if ("gt" in want) return `> ${want.gt}`;
+      if ("lt" in want) return `< ${want.lt}`;
+      if ("eq" in want) return `${want.eq}`;
+    }
+    return want;
+  }
+
   /* ---------- progress (localStorage) ---------- */
   function pKey() { return "module-progress:" + MODULE.id; }
   function loadProg() { try { return JSON.parse(localStorage.getItem(pKey())) || {}; } catch { return {}; } }
@@ -185,9 +208,10 @@
         if (card.classList.contains("done")) return;
         if (typeof window.moduleState !== "function") { feedback(card, false, "This page can't read the build state."); return; }
         const st = window.moduleState();
-        const ok = Object.keys(Q.check).every((k) => st[k] === Q.check[k]);
-        const detail = Object.entries(Q.check).map(([k, v]) => `${k}=${v}`).join(", ");
-        record(ok); feedback(card, ok, (ok ? "" : `Target: ${detail}. You have ${Object.keys(Q.check).map((k) => `${k}=${st[k]}`).join(", ")}. `) + (Q.explain || ""));
+        const ok = Object.keys(Q.check).every((k) => matches(st[k], Q.check[k]));
+        const fmt = (v) => (typeof v === "number" ? +v.toFixed(2) : v);
+        const detail = Object.entries(Q.check).map(([k, v]) => `${k}=${describe(v)}`).join(", ");
+        record(ok); feedback(card, ok, (ok ? "" : `Target: ${detail}. You have ${Object.keys(Q.check).map((k) => `${k}=${fmt(st[k])}`).join(", ")}. `) + (Q.explain || ""));
       };
       card.appendChild(row);
       card.appendChild(elFrom(`<div class="build-note">Build it under the Explore tab, then come back and press “Check my atom”.</div>`));
